@@ -20,6 +20,7 @@
 #include "main.h"
 #include "fdcan.h"
 #include "memorymap.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -29,8 +30,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-HAL_StatusTypeDef BSP_CAN2_DJIMotorCmd(int16_t motor1,int16_t motor2,int16_t motor3,int16_t motor4){
-  FDCAN_TxHeaderTypeDef TxHeader = {0};   // ✅ 必须清零
+HAL_StatusTypeDef BSP_FDCAN_DJImotorcmd(int16_t motor1,int16_t motor2,int16_t motor3,int16_t motor4){
+  FDCAN_TxHeaderTypeDef TxHeader = {0};
   uint8_t TxData[8];
 
   TxHeader.Identifier          = 0x200;
@@ -38,26 +39,20 @@ HAL_StatusTypeDef BSP_CAN2_DJIMotorCmd(int16_t motor1,int16_t motor2,int16_t mot
   TxHeader.TxFrameType         = FDCAN_DATA_FRAME;
   TxHeader.DataLength          = FDCAN_DLC_BYTES_8;
 
-  TxHeader.FDFormat            = FDCAN_CLASSIC_CAN; // ✅ 明确声明
+  TxHeader.FDFormat            = FDCAN_CLASSIC_CAN;
   TxHeader.BitRateSwitch       = FDCAN_BRS_OFF;
 
   TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
   TxHeader.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
-  TxHeader.MessageMarker       = 0;
 
-  TxData[0] = (uint8_t)(motor1 >> 8);
-  TxData[1] = (uint8_t)(motor1);
-  TxData[2] = (uint8_t)(motor2 >> 8);
-  TxData[3] = (uint8_t)(motor2);
-  TxData[4] = (uint8_t)(motor3 >> 8);
-  TxData[5] = (uint8_t)(motor3);
-  TxData[6] = (uint8_t)(motor4 >> 8);
-  TxData[7] = (uint8_t)(motor4);
-
-  if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) == 0)
-  {
-    return HAL_BUSY;   // FIFO 满，保护性返回
-  }
+  TxData[0] = motor1 >> 8;
+  TxData[1] = motor1;
+  TxData[2] = motor2 >> 8;
+  TxData[3] = motor2;
+  TxData[4] = motor3 >> 8;
+  TxData[5] = motor3;
+  TxData[6] = motor4 >> 8;
+  TxData[7] = motor4;
 
   return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
 }
@@ -121,15 +116,34 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_FDCAN1_Init();
+  MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
+  // FDCAN_FilterTypeDef sFilter = {0};
+  //
+  // /* 接收所有标准帧，放入 FIFO0 */
+  // sFilter.IdType       = FDCAN_STANDARD_ID;
+  // sFilter.FilterIndex  = 0;
+  // sFilter.FilterType   = FDCAN_FILTER_MASK;
+  // sFilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  // sFilter.FilterID1    = 0x000;   // ID
+  // sFilter.FilterID2    = 0x000;   // Mask = 0 → 全接收
+  //
+  // HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilter);
+  //
+  // /* 必须打开 FIFO0 */
+  // HAL_FDCAN_ActivateNotification(&hfdcan1,
+  //                                FDCAN_IT_RX_FIFO0_NEW_MESSAGE,
+  //                                0);
+
   HAL_FDCAN_Start(&hfdcan1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BSP_CAN2_DJIMotorCmd(1000,1000,1000,1000);
+    BSP_FDCAN_DJImotorcmd(1000,1000,1000,1000);
     HAL_Delay(10);
     /* USER CODE END WHILE */
 
