@@ -14,19 +14,25 @@ set(MX_Include_Dirs
     ${CMAKE_SOURCE_DIR}/Core/Inc
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/include
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32H7xx/Include
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/Include
+    ${CMAKE_SOURCE_DIR}/Middlewares/ST/ARM/DSP/Inc
 )
 
 # STM32CubeMX generated application sources
 set(MX_Application_Src
     ${CMAKE_SOURCE_DIR}/Core/Src/main.c
     ${CMAKE_SOURCE_DIR}/Core/Src/gpio.c
+    ${CMAKE_SOURCE_DIR}/Core/Src/freertos.c
     ${CMAKE_SOURCE_DIR}/Core/Src/fdcan.c
     ${CMAKE_SOURCE_DIR}/Core/Src/memorymap.c
     ${CMAKE_SOURCE_DIR}/Core/Src/tim.c
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32h7xx_it.c
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32h7xx_hal_msp.c
+    ${CMAKE_SOURCE_DIR}/Core/Src/stm32h7xx_hal_timebase_tim.c
     ${CMAKE_SOURCE_DIR}/Core/Src/sysmem.c
     ${CMAKE_SOURCE_DIR}/Core/Src/syscalls.c
     ${CMAKE_SOURCE_DIR}/startup_stm32h723xx.s
@@ -35,6 +41,8 @@ set(MX_Application_Src
 # STM32 HAL/LL Drivers
 set(STM32_Drivers_Src
     ${CMAKE_SOURCE_DIR}/Core/Src/system_stm32h7xx.c
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c
+    ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c
@@ -52,13 +60,23 @@ set(STM32_Drivers_Src
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c
     ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c
-    ${CMAKE_SOURCE_DIR}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c
 )
 
 # Drivers Midllewares
 
 
+set(FreeRTOS_Src
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/croutine.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/list.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/queue.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/timers.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+    ${CMAKE_SOURCE_DIR}/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
+)
 
 # Link directories setup
 set(MX_LINK_DIRS
@@ -67,7 +85,7 @@ set(MX_LINK_DIRS
 # Project static libraries
 set(MX_LINK_LIBS 
     STM32_Drivers
-    
+    FreeRTOS	
 )
 # Interface library for includes and symbols
 add_library(stm32cubemx INTERFACE)
@@ -79,6 +97,11 @@ add_library(STM32_Drivers OBJECT)
 target_sources(STM32_Drivers PRIVATE ${STM32_Drivers_Src})
 target_link_libraries(STM32_Drivers PUBLIC stm32cubemx)
 
+
+# Create FreeRTOS static library
+add_library(FreeRTOS OBJECT)
+target_sources(FreeRTOS PRIVATE ${FreeRTOS_Src})
+target_link_libraries(FreeRTOS PUBLIC stm32cubemx)
 
 # Add STM32CubeMX generated application sources to the project
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MX_Application_Src})
