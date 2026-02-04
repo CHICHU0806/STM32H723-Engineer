@@ -90,12 +90,12 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
     {
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
-            /* ================= CAN1 (FDCAN1) 处理 ================= */
+            /* ================= FDCAN1处理 ================= */
             if (hfdcan->Instance == FDCAN1)
             {
                 switch (RxHeader.Identifier)
                 {
-                    case 0x201://此处仅接收了id为0x201电机的报文
+                    case 0x204://此处仅接收了id为0x204电机的报文
                     {
                         djimotor1.rotor_angle    = ((RxData[0] << 8) | RxData[1]);
                         djimotor1.rotor_speed    = ((RxData[2] << 8) | RxData[3]);
