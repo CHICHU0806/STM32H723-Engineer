@@ -22,41 +22,16 @@
 #include "fdcan.h"
 #include "memorymap.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bsp_fdcan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-HAL_StatusTypeDef BSP_FDCAN_DJImotorcmd(int16_t motor1,int16_t motor2,int16_t motor3,int16_t motor4){
-  FDCAN_TxHeaderTypeDef TxHeader = {0};
-  uint8_t TxData[8];
-
-  TxHeader.Identifier          = 0x200;
-  TxHeader.IdType              = FDCAN_STANDARD_ID;
-  TxHeader.TxFrameType         = FDCAN_DATA_FRAME;
-  TxHeader.DataLength          = FDCAN_DLC_BYTES_8;
-
-  TxHeader.FDFormat            = FDCAN_CLASSIC_CAN;
-  TxHeader.BitRateSwitch       = FDCAN_BRS_OFF;
-
-  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-  TxHeader.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
-
-  TxData[0] = motor1 >> 8;
-  TxData[1] = motor1;
-  TxData[2] = motor2 >> 8;
-  TxData[3] = motor2;
-  TxData[4] = motor3 >> 8;
-  TxData[5] = motor3;
-  TxData[6] = motor4 >> 8;
-  TxData[7] = motor4;
-
-  return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
-}
 
 /* USER CODE END PTD */
 
@@ -119,33 +94,17 @@ int main(void)
   MX_GPIO_Init();
   MX_FDCAN1_Init();
   MX_TIM12_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  // FDCAN_FilterTypeDef sFilter = {0};
-  //
-  // /* 接收所有标准帧，放入 FIFO0 */
-  // sFilter.IdType       = FDCAN_STANDARD_ID;
-  // sFilter.FilterIndex  = 0;
-  // sFilter.FilterType   = FDCAN_FILTER_MASK;
-  // sFilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  // sFilter.FilterID1    = 0x000;   // ID
-  // sFilter.FilterID2    = 0x000;   // Mask = 0 → 全接收
-  //
-  // HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilter);
-  //
-  // /* 必须打开 FIFO0 */
-  // HAL_FDCAN_ActivateNotification(&hfdcan1,
-  //                                FDCAN_IT_RX_FIFO0_NEW_MESSAGE,
-  //                                0);
-
-  HAL_FDCAN_Start(&hfdcan1);
+  BSP_FDCAN_Init();
 
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  //MX_FREERTOS_Init();
 
   /* Start scheduler */
-  osKernelStart();
+  //osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
 
@@ -153,7 +112,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    BSP_FDCAN_DJImotorcmd(1000,1000,1000,1000);
+    bsp_fdcan_djimotorcmd(1000,1000,1000,1000);
     HAL_Delay(10);
     /* USER CODE END WHILE */
 
