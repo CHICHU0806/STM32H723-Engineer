@@ -18,10 +18,18 @@ void bsp_fdcan::bsp_fdcan_init()
     {
         Error_Handler();
     }
+    if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK)
+    {
+        Error_Handler();
+    }
     // 如果有其他 CAN 外设，也在这里启动
 
     // 3. 激活 FDCAN 接收中断 (当 FIFO0 中有新消息时触发)
     if (HAL_FDCAN_ActivateNotification(&hfdcan1,FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0) != HAL_OK)
+    {
+        Error_Handler(); // 激活中断失败
+    }
+    if (HAL_FDCAN_ActivateNotification(&hfdcan2,FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0) != HAL_OK)
     {
         Error_Handler(); // 激活中断失败
     }
@@ -77,7 +85,7 @@ HAL_StatusTypeDef bsp_fdcan::BSP_FDCAN_DJIMotorCmd(int16_t motor1,int16_t motor2
     TxData[6] = motor4 >> 8;
     TxData[7] = motor4;
 
-    return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
+    return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &TxHeader, TxData);
 }
 
 // FDCAN 接收中断回调函数
@@ -92,6 +100,21 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
             /* ================= FDCAN1处理 ================= */
             if (hfdcan->Instance == FDCAN1)
+            {
+                switch (RxHeader.Identifier)
+                {
+                    case 0x204://此处仅接收了id为0x204电机的报文
+                    {
+                        djimotor1.rotor_angle    = ((RxData[0] << 8) | RxData[1]);
+                        djimotor1.rotor_speed    = ((RxData[2] << 8) | RxData[3]);
+                        djimotor1.torque_current = ((RxData[4] << 8) | RxData[5]);
+                        djimotor1.temp           =   RxData[6];
+                        break;
+                    }
+                    default: break;
+                }
+            }
+            if (hfdcan->Instance == FDCAN2)
             {
                 switch (RxHeader.Identifier)
                 {
